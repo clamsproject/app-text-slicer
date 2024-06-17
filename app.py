@@ -25,6 +25,7 @@ from lapps.discriminators import Uri
 
 from mmif.utils import text_document_helper
 
+
 class TextSlicer(ClamsApp):
 
     def __init__(self):
@@ -37,20 +38,39 @@ class TextSlicer(ClamsApp):
         pass
 
     def _annotate(self, mmif: Mmif, **parameters) -> Mmif:
-        for tf_view in mmif.get_all_views_contain(AnnotationTypes.TimeFrame):
-            if Uri.TOKEN in tf_view.metadata.contains:
-                asr_vid = tf_view.id
-                break
-        sliced = []
-        for ann in mmif.get_annotations_between_time(30000, 90000, time_unit="milliseconds"):
-            if ann.is_type(Uri.TOKEN) and ann.long_id.startswith(asr_vid):
-                sliced.append(ann.get('word'))
-        nv = mmif.new_view()
-        self.sign_view(nv, parameters)
-        ntd = nv.new_textdocument(' '.join(sliced))
-        return mmif
-                
-        
+        start_time = parameters["start_time"]
+        end_time = parameters["end_time"]
+        unit = parameters["unit"]
+
+        self.mmif = mmif if isinstance(mmif, Mmif) else Mmif(mmif)
+        new_view = self._add_new_view(parameters)
+        self._run_nlp_tool(start_time, end_time, unit, new_view)
+        return self.mmif
+
+    def _add_new_view(self, runtime_config):
+        view = self.mmif.new_view()
+        view.metadata.app = self.metadata.identifier
+        self.sign_view(view, runtime_config)
+        view.new_contain(DocumentTypes.TextDocument)
+        return view
+
+    def _run_nlp_tool(self, s, e, unit, new_view):
+        sliced_texts = text_document_helper.slice_text(self.mmif, s, e, unit)
+        ntd = new_view.new_textdocument(sliced_texts)
+
+        # for tf_view in mmif.get_all_views_contain(AnnotationTypes.TimeFrame):
+        #     if Uri.TOKEN in tf_view.metadata.contains:
+        #         asr_vid = tf_view.id
+        #         break
+        # sliced_texts = []
+        # for ann in mmif.get_annotations_between_time(start_time, end_time, unit):
+        #     if ann.is_type(Uri.TOKEN) and ann.long_id.startswith(asr_vid):
+        #         sliced_texts.append(ann.get('word'))
+        # new_view = mmif.new_view()
+        # self.sign_view(new_view, parameters)
+        # ntd = new_view.new_textdocument(' '.join(sliced_texts))
+        # return mmif
+
         # see https://sdk.clams.ai/autodoc/clams.app.html#clams.app.ClamsApp._annotate
 
 
