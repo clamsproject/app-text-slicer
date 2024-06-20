@@ -13,6 +13,7 @@ The app.py script does several things:
 
 import argparse
 import logging
+from typing import List
 
 # Imports needed for Clams and MMIF.
 # Non-NLP Clams applications will require AnnotationTypes
@@ -38,25 +39,22 @@ class TextSlicer(ClamsApp):
         pass
 
     def _annotate(self, mmif: Mmif, **parameters) -> Mmif:
-        start_time = parameters["start_time"]
-        end_time = parameters["end_time"]
-        unit = parameters["unit"]
-
         self.mmif = mmif if isinstance(mmif, Mmif) else Mmif(mmif)
-        new_view = self._add_new_view(parameters)
-        self._run_nlp_tool(start_time, end_time, unit, new_view)
+        self.text_doc = self.mmif.get_documents_by_type(DocumentTypes.TextDocument)
+        assert len(self.text_doc) == 1, "There should be exactly one TextDocument in the MMIF file"
+        
+        new_view = self.mmif.new_view()
+        self.sign_view(new_view, parameters)
+
+        for tf_view in self.mmif.get_all_views_contain(AnnotationTypes.TimeFrame):
+            tf_anns_in_view = tf_view.get_annotations(AnnotationTypes.TimeFrame)
+            for tf_ann in tf_anns_in_view:
+                start_time = self.mmif.get_start(tf_ann) 
+                end_time = self.mmif.get_end(tf_ann) 
+                sliced_text = new_view.new_textdocument(text_document_helper.slice_text(self.mmif, start_time, end_time))
+                new_align = new_view.new_annotation(at_type=AnnotationTypes.Alignment, properties={'source': tf_ann.id, 'target': sliced_text.id}) 
+
         return self.mmif
-
-    def _add_new_view(self, runtime_config):
-        view = self.mmif.new_view()
-        view.metadata.app = self.metadata.identifier
-        self.sign_view(view, runtime_config)
-        view.new_contain(DocumentTypes.TextDocument)
-        return view
-
-    def _run_nlp_tool(self, s, e, unit, new_view):
-        sliced_texts = text_document_helper.slice_text(self.mmif, s, e, unit)
-        ntd = new_view.new_textdocument(sliced_texts)
 
         # for tf_view in mmif.get_all_views_contain(AnnotationTypes.TimeFrame):
         #     if Uri.TOKEN in tf_view.metadata.contains:

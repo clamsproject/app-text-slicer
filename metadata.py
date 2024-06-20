@@ -24,7 +24,7 @@ def appmetadata() -> AppMetadata:
     # first set up some basic information
     metadata = AppMetadata(
         name="Text Slicer",
-        description="Slice text snippets",  # briefly describe what the purpose and features of the app
+        description="Slice text snippets from a provided text document given time frames",  # briefly describe what the purpose and features of the app
         app_license="Apache2",  # short name for a software license like MIT, Apache2, GPL, etc.
         identifier="text-slicer",  # should be a single string without whitespaces. If you don't intent to publish this app to the CLAMS app-directory, please use a full IRI format.
         url="https://github.com/clamsproject/app-text-slicer",  # a website where the source code and full documentation of the app is hosted
@@ -40,13 +40,16 @@ def appmetadata() -> AppMetadata:
         # analyzer_license="",  # short name for a software license
     )
     # and then add I/O specifications: an app must have at least one input and one output
-    metadata.add_input(AnnotationTypes.TimeFrame)
+    metadata.add_input(AnnotationTypes.TimeFrame)  # Output from SWT
+    metadata.add_input(DocumentTypes.TextDocument) # Output from OCR
     metadata.add_output(DocumentTypes.TextDocument)
+    metadata.add_output(AnnotationTypes.Alignment)
+    
     
     # (optional) and finally add runtime parameter specifications
-    metadata.add_parameter(name='start_time', description='start time of the slice', type='number', default='0')
-    metadata.add_parameter(name='end_time', description='end time of the slice', type='number', default='10000')
-    metadata.add_parameter(name='unit', description='unit of the time', type='string', default='ms')
+    # metadata.add_parameter(name='start_time', description='start time of the slice', type='number', default='0')
+    # metadata.add_parameter(name='end_time', description='end time of the slice', type='number', default='10000')
+    # metadata.add_parameter(name='unit', description='unit of the time', type='string', default='ms')
     
     # CHANGE this line and make sure return the compiled `metadata` instance
     return metadata
