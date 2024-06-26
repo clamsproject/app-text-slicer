@@ -33,44 +33,30 @@ class TextSlicer(ClamsApp):
         super().__init__()
 
     def _appmetadata(self):
-        # see https://sdk.clams.ai/autodoc/clams.app.html#clams.app.ClamsApp._load_appmetadata
-        # Also check out ``metadata.py`` in this directory.
-        # When using the ``metadata.py`` leave this do-nothing "pass" method here.
         pass
 
     def _annotate(self, mmif: Mmif, **parameters) -> Mmif:
         self.mmif = mmif if isinstance(mmif, Mmif) else Mmif(mmif)
         self.text_doc = self.mmif.get_documents_by_type(DocumentTypes.TextDocument)
         assert len(self.text_doc) == 1, "There should be exactly one TextDocument in the MMIF file"
-        
+
+        labels = parameters["contain_labels"]
+        label_set = set([label.strip() for label in labels.split(',')] if labels else [])
+
         new_view = self.mmif.new_view()
         self.sign_view(new_view, parameters)
 
         for tf_view in self.mmif.get_all_views_contain(AnnotationTypes.TimeFrame):
             tf_anns_in_view = tf_view.get_annotations(AnnotationTypes.TimeFrame)
             for tf_ann in tf_anns_in_view:
-                start_time = self.mmif.get_start(tf_ann) 
-                end_time = self.mmif.get_end(tf_ann) 
-                sliced_text = new_view.new_textdocument(text_document_helper.slice_text(self.mmif, start_time, end_time))
-                new_align = new_view.new_annotation(at_type=AnnotationTypes.Alignment, properties={'source': tf_ann.id, 'target': sliced_text.id}) 
+                if not label_set or tf_ann._get_label() in label_set:
+                    start_time = self.mmif.get_start(tf_ann) 
+                    end_time = self.mmif.get_end(tf_ann) 
+                    sliced_text = new_view.new_textdocument(text_document_helper.slice_text(self.mmif, start_time, end_time))
+                    new_align = new_view.new_annotation(at_type=AnnotationTypes.Alignment,
+                                                        properties={'source': tf_ann.id, 'target': sliced_text.id}) 
 
         return self.mmif
-
-        # for tf_view in mmif.get_all_views_contain(AnnotationTypes.TimeFrame):
-        #     if Uri.TOKEN in tf_view.metadata.contains:
-        #         asr_vid = tf_view.id
-        #         break
-        # sliced_texts = []
-        # for ann in mmif.get_annotations_between_time(start_time, end_time, unit):
-        #     if ann.is_type(Uri.TOKEN) and ann.long_id.startswith(asr_vid):
-        #         sliced_texts.append(ann.get('word'))
-        # new_view = mmif.new_view()
-        # self.sign_view(new_view, parameters)
-        # ntd = new_view.new_textdocument(' '.join(sliced_texts))
-        # return mmif
-
-        # see https://sdk.clams.ai/autodoc/clams.app.html#clams.app.ClamsApp._annotate
-
 
 def get_app():
     """

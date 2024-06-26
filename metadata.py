@@ -47,11 +47,20 @@ def appmetadata() -> AppMetadata:
     
     
     # (optional) and finally add runtime parameter specifications
-    # metadata.add_parameter(name='start_time', description='start time of the slice', type='number', default='0')
-    # metadata.add_parameter(name='end_time', description='end time of the slice', type='number', default='10000')
-    # metadata.add_parameter(name='unit', description='unit of the time', type='string', default='ms')
-    
-    # CHANGE this line and make sure return the compiled `metadata` instance
+    metadata.add_parameter(name='contain_labels',
+                           description=
+                           '''
+                           A list of labels of TimeFrame to look for.
+                           Available options are:
+                           ['bars', 'tones', 'bars-and-tones','speech',
+                           'noise', 'music', 'slate', 'chyron',
+                           'lower-third', 'credits']
+                           User needs to provide a string of comma-separated labels, 
+                           e.g. 'bars, credits, chyron'.
+                           Default is all are selected.
+                           ''',
+                           type='string',
+                           default='')
     return metadata
 
 
