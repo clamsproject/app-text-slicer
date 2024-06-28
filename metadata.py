@@ -40,27 +40,27 @@ def appmetadata() -> AppMetadata:
         # analyzer_license="",  # short name for a software license
     )
     # and then add I/O specifications: an app must have at least one input and one output
-    metadata.add_input(AnnotationTypes.TimeFrame)  # Output from SWT
-    metadata.add_input(DocumentTypes.TextDocument) # Output from OCR
+    metadata.add_input(AnnotationTypes.TimeFrame)   # Output from SWT
+    metadata.add_input(DocumentTypes.TextDocument)  # Output from OCR
     metadata.add_output(DocumentTypes.TextDocument)
     metadata.add_output(AnnotationTypes.Alignment)
     
-    
     # (optional) and finally add runtime parameter specifications
-    metadata.add_parameter(name='contain_labels',
+    metadata.add_parameter(name='containLabels',
                            description=
                            '''
-                           A list of labels of TimeFrame to look for.
+                           A list of labels that user expect TimeFrames contain.
                            Available options are:
                            ['bars', 'tones', 'bars-and-tones','speech',
                            'noise', 'music', 'slate', 'chyron',
                            'lower-third', 'credits']
-                           User needs to provide a string of comma-separated labels, 
-                           e.g. 'bars, credits, chyron'.
-                           Default is all are selected.
+                           User needs to provide a list of labels if multiple labels are expected
+                           e.g. ['bars', 'credits', 'chyron'].
+                           Default value is all labels are selected.
                            ''',
                            type='string',
-                           default='')
+                           multivalued=True,  # Allow users to input one or more labels wanted
+                           default=[])
     return metadata
 
 
