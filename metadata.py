@@ -24,10 +24,10 @@ def appmetadata() -> AppMetadata:
     # first set up some basic information
     metadata = AppMetadata(
         name="Text Slicer",
-        description="slice text snippets",  # briefly describe what the purpose and features of the app
+        description="Slice text snippets from a provided text document given time frames",  # briefly describe what the purpose and features of the app
         app_license="Apache2",  # short name for a software license like MIT, Apache2, GPL, etc.
         identifier="text-slicer",  # should be a single string without whitespaces. If you don't intent to publish this app to the CLAMS app-directory, please use a full IRI format.
-        url="https://fakegithub.com/some/repository",  # a website where the source code and full documentation of the app is hosted
+        url="https://github.com/clamsproject/app-text-slicer",  # a website where the source code and full documentation of the app is hosted
         # (if you are on the CLAMS team, this MUST be "https://github.com/clamsproject/app-text-slicer"
         # (see ``.github/README.md`` file in this directory for the reason)
         # analyzer_version='version_X', # use this IF THIS APP IS A WRAPPER of an existing computational analysis algorithm
@@ -40,15 +40,22 @@ def appmetadata() -> AppMetadata:
         # analyzer_license="",  # short name for a software license
     )
     # and then add I/O specifications: an app must have at least one input and one output
-    metadata.add_input(AnnotationTypes.TimeFrame)
+    metadata.add_input(AnnotationTypes.TimeFrame)   # Output from SWT
+    metadata.add_input(DocumentTypes.TextDocument)  # Output from OCR
     metadata.add_output(DocumentTypes.TextDocument)
+    metadata.add_output(AnnotationTypes.Alignment)
     
     # (optional) and finally add runtime parameter specifications
-    metadata.add_parameter(name='a_param', description='example parameter description',
-                           type='boolean', default='false')
-    # metadta.add_parameter(more...)
-    
-    # CHANGE this line and make sure return the compiled `metadata` instance
+    metadata.add_parameter(name='containLabel',
+                           description="A list of labels that user expect TimeFrames contain.\n"
+                                       "Labels can be chosen from but not limited to:\n"
+                                       "['bars', 'tones', 'bars-and-tones','speech','noise',\n "
+                                       "'music', 'slate', 'chyron', 'lower-third', 'credits']\n"
+                                       "Users are required to select at least one label. Otherwise, "
+                                       "errors would be thrown instead",
+                           type='string',
+                           multivalued=True,  # Allow users to input one or more labels wanted
+                           )
     return metadata
 
 

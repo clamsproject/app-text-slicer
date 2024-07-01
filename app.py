@@ -13,6 +13,7 @@ The app.py script does several things:
 
 import argparse
 import logging
+from typing import List
 
 # Imports needed for Clams and MMIF.
 # Non-NLP Clams applications will require AnnotationTypes
@@ -25,33 +26,35 @@ from lapps.discriminators import Uri
 
 from mmif.utils import text_document_helper
 
+
 class TextSlicer(ClamsApp):
 
     def __init__(self):
         super().__init__()
 
     def _appmetadata(self):
-        # see https://sdk.clams.ai/autodoc/clams.app.html#clams.app.ClamsApp._load_appmetadata
-        # Also check out ``metadata.py`` in this directory.
-        # When using the ``metadata.py`` leave this do-nothing "pass" method here.
         pass
 
     def _annotate(self, mmif: Mmif, **parameters) -> Mmif:
-        for tf_view in mmif.get_all_views_contain(AnnotationTypes.TimeFrame):
-            if Uri.TOKEN in tf_view.metadata.contains:
-                asr_vid = tf_view.id
-                break
-        sliced = []
-        for ann in mmif.get_annotations_between_time(30000, 90000, time_unit="milliseconds"):
-            if ann.is_type(Uri.TOKEN) and ann.long_id.startswith(asr_vid):
-                sliced.append(ann.get('word'))
-        nv = mmif.new_view()
-        self.sign_view(nv, parameters)
-        ntd = nv.new_textdocument(' '.join(sliced))
-        return mmif
-                
-        
-        # see https://sdk.clams.ai/autodoc/clams.app.html#clams.app.ClamsApp._annotate
+        self.mmif = mmif if isinstance(mmif, Mmif) else Mmif(mmif)
+        self.text_doc = self.mmif.get_documents_by_type(DocumentTypes.TextDocument)
+        assert len(self.text_doc) == 1, "There should be exactly one TextDocument in the MMIF file"
+
+        label_set = set(parameters["containLabel"])
+        new_view = self.mmif.new_view()
+        self.sign_view(new_view, parameters)
+
+        for tf_view in self.mmif.get_all_views_contain(AnnotationTypes.TimeFrame):
+            tf_anns_in_view = tf_view.get_annotations(AnnotationTypes.TimeFrame)
+            for tf_ann in tf_anns_in_view:
+                if tf_ann.get_property('label') in label_set:
+                    start_time = self.mmif.get_start(tf_ann) 
+                    end_time = self.mmif.get_end(tf_ann) 
+                    sliced_text = new_view.new_textdocument(text_document_helper.slice_text(self.mmif, start_time, end_time))
+                    new_align = new_view.new_annotation(at_type=AnnotationTypes.Alignment,
+                                                        properties={'source': tf_ann.long_id, 'target': sliced_text.long_id}) 
+
+        return self.mmif
 
 
 def get_app():
