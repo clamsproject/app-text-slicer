@@ -47,19 +47,15 @@ def appmetadata() -> AppMetadata:
     
     # (optional) and finally add runtime parameter specifications
     metadata.add_parameter(name='containLabel',
-                           description=
-                           '''
-                           A list of labels that user expect TimeFrames contain.
-                           Available options are:
-                           ['bars', 'tones', 'bars-and-tones','speech',
-                           'noise', 'music', 'slate', 'chyron',
-                           'lower-third', 'credits']
-                           Users must select at least one of the following labels, errors would 
-                           be thrown instead.
-                           ''',
+                           description="A list of labels that user expect TimeFrames contain.\n"
+                                       "Labels can be chosen from but not limited to:\n"
+                                       "['bars', 'tones', 'bars-and-tones','speech','noise',\n "
+                                       "'music', 'slate', 'chyron', 'lower-third', 'credits']\n"
+                                       "Users are required to select at least one label. Otherwise, "
+                                       "errors would be thrown instead",
                            type='string',
                            multivalued=True,  # Allow users to input one or more labels wanted
-                           default=[])
+                           )
     return metadata
 
 

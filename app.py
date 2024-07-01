@@ -39,9 +39,8 @@ class TextSlicer(ClamsApp):
         self.mmif = mmif if isinstance(mmif, Mmif) else Mmif(mmif)
         self.text_doc = self.mmif.get_documents_by_type(DocumentTypes.TextDocument)
         assert len(self.text_doc) == 1, "There should be exactly one TextDocument in the MMIF file"
-        label_set = set(parameters["containLabel"])
-        assert len(label_set) >= 1, "There should be at least one label in the parameters"  # Here we make the label parameter as required
 
+        label_set = set(parameters["containLabel"])
         new_view = self.mmif.new_view()
         self.sign_view(new_view, parameters)
 
