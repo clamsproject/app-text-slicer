@@ -46,7 +46,7 @@ def appmetadata() -> AppMetadata:
     metadata.add_output(AnnotationTypes.Alignment)
     
     # (optional) and finally add runtime parameter specifications
-    metadata.add_parameter(name='containLabels',
+    metadata.add_parameter(name='containLabel',
                            description=
                            '''
                            A list of labels that user expect TimeFrames contain.
@@ -54,9 +54,8 @@ def appmetadata() -> AppMetadata:
                            ['bars', 'tones', 'bars-and-tones','speech',
                            'noise', 'music', 'slate', 'chyron',
                            'lower-third', 'credits']
-                           User needs to provide a list of labels if multiple labels are expected
-                           e.g. ['bars', 'credits', 'chyron'].
-                           Default value is all labels are selected.
+                           Users must select at least one of the following labels, errors would 
+                           be thrown instead.
                            ''',
                            type='string',
                            multivalued=True,  # Allow users to input one or more labels wanted

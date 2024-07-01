@@ -39,15 +39,16 @@ class TextSlicer(ClamsApp):
         self.mmif = mmif if isinstance(mmif, Mmif) else Mmif(mmif)
         self.text_doc = self.mmif.get_documents_by_type(DocumentTypes.TextDocument)
         assert len(self.text_doc) == 1, "There should be exactly one TextDocument in the MMIF file"
+        label_set = set(parameters["containLabel"])
+        assert len(label_set) >= 1, "There should be at least one label in the parameters"  # Here we make the label parameter as required
 
-        label_set = set(parameters["containLabels"])
         new_view = self.mmif.new_view()
         self.sign_view(new_view, parameters)
 
         for tf_view in self.mmif.get_all_views_contain(AnnotationTypes.TimeFrame):
             tf_anns_in_view = tf_view.get_annotations(AnnotationTypes.TimeFrame)
             for tf_ann in tf_anns_in_view:
-                if not label_set or tf_ann.get_property('label') in label_set:
+                if tf_ann.get_property('label') in label_set:
                     start_time = self.mmif.get_start(tf_ann) 
                     end_time = self.mmif.get_end(tf_ann) 
                     sliced_text = new_view.new_textdocument(text_document_helper.slice_text(self.mmif, start_time, end_time))
@@ -55,6 +56,7 @@ class TextSlicer(ClamsApp):
                                                         properties={'source': tf_ann.long_id, 'target': sliced_text.long_id}) 
 
         return self.mmif
+
 
 def get_app():
     """
