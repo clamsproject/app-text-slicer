@@ -56,6 +56,17 @@ def appmetadata() -> AppMetadata:
                            type='string',
                            multivalued=True,  # Allow users to input one or more labels wanted
                            )
+
+    metadata.add_parameter(name='runMode',
+                           description="The mode determines the app what time span to slice text snippets.\n"
+                                       "There are currently two modes available:\n"
+                                       "'regular': the time span/interval is chosen by the start "
+                                       "and end points of a TimeFrame.\n"
+                                       "'enrich': the time span/interval is chosen by the start point of two "
+                                       "consecutive TimeFrames with the same label (e.g. chyron, slate, credits)",
+                           type='string',
+                           choices=['regular', 'enrich'],
+                           default='regular')
     return metadata
 
 
