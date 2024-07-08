@@ -24,7 +24,8 @@ from mmif import Mmif, View, Annotation, Document, AnnotationTypes, DocumentType
 # For an NLP tool we need to import the LAPPS vocabulary items
 from lapps.discriminators import Uri
 
-from mmif.utils import text_document_helper
+from mmif.utils import text_document_helper as tdh
+from collections import defaultdict
 
 
 class TextSlicer(ClamsApp):
@@ -40,20 +41,36 @@ class TextSlicer(ClamsApp):
         self.text_doc = self.mmif.get_documents_by_type(DocumentTypes.TextDocument)
         assert len(self.text_doc) == 1, "There should be exactly one TextDocument in the MMIF file"
 
+        # Read in user-chosen runtime parameters
         label_set = set(parameters["containLabel"])
+        run_mode = parameters["runMode"]
+
+        # Register a new View in mmif object
         new_view = self.mmif.new_view()
         self.sign_view(new_view, parameters)
 
+        label_to_tf = defaultdict(list)
         for tf_view in self.mmif.get_all_views_contain(AnnotationTypes.TimeFrame):
-            tf_anns_in_view = tf_view.get_annotations(AnnotationTypes.TimeFrame)
-            for tf_ann in tf_anns_in_view:
-                if tf_ann.get_property('label') in label_set:
-                    start_time = self.mmif.get_start(tf_ann) 
-                    end_time = self.mmif.get_end(tf_ann) 
-                    sliced_text = new_view.new_textdocument(text_document_helper.slice_text(self.mmif, start_time, end_time))
-                    new_align = new_view.new_annotation(at_type=AnnotationTypes.Alignment,
-                                                        properties={'source': tf_ann.long_id, 'target': sliced_text.long_id}) 
+            tf_anns = tf_view.get_annotations(AnnotationTypes.TimeFrame)
+            for ann in tf_anns:
+                label = ann.get_property('label')
+                if label in label_set:
+                    label_to_tf[label].append(ann)
 
+        for _, tfs in label_to_tf.items():
+            if run_mode == 'regular':
+                for tf in tfs:
+                    sliced_text = new_view.new_textdocument(tdh.slice_text(self.mmif, tf.get('start'), tf.get('end')))
+                    new_alignment = new_view.new_annotation(at_type=AnnotationTypes.Alignment,
+                                                            properties={'source': tf.long_id, 'target': sliced_text.long_id})
+            elif run_mode == 'enrich':
+                for tf1, tf2 in zip(tfs[:-1], tfs[1:]):
+                    sliced_text = new_view.new_textdocument(tdh.slice_text(self.mmif, tf1.get('start'), tf2.get('start')))
+                    #FIXME: Current idea is to align both timeframes to the same sliced text. This may not be the best! 
+                    first_new_alignment = new_view.new_annotation(at_type=AnnotationTypes.Alignment,
+                                                            properties={'source': tf1.long_id, 'target': sliced_text.long_id})
+                    second_new_alignment = new_view.new_annotation(at_type=AnnotationTypes.Alignment,
+                                                            properties={'source': tf2.long_id, 'target': sliced_text.long_id})
         return self.mmif
 
 
