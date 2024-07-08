@@ -66,9 +66,11 @@ class TextSlicer(ClamsApp):
             elif run_mode == 'enrich':
                 for tf1, tf2 in zip(tfs[:-1], tfs[1:]):
                     sliced_text = new_view.new_textdocument(tdh.slice_text(self.mmif, tf1.get('start'), tf2.get('start')))
-                    new_alignment = new_view.new_annotation(at_type=AnnotationTypes.Alignment,
+                    #FIXME: Current idea is to align both timeframes to the same sliced text. This may not be the best! 
+                    first_new_alignment = new_view.new_annotation(at_type=AnnotationTypes.Alignment,
                                                             properties={'source': tf1.long_id, 'target': sliced_text.long_id})
-
+                    second_new_alignment = new_view.new_annotation(at_type=AnnotationTypes.Alignment,
+                                                            properties={'source': tf2.long_id, 'target': sliced_text.long_id})
         return self.mmif
 
 
